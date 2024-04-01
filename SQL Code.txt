@@ -1,0 +1,340 @@
+/*
+ANg Li
+all customers first,last names and email
+*/
+Select 
+  FirstName,
+  LastName,
+  Email
+From 
+  Customer
+Order By
+LastName;  
+
+
+
+
+Select
+	InvoiceDate,
+	BillingAddress,
+	BillingCity,
+	total
+FROM
+	Invoice
+WHERE
+	--total BETWEEN 1.98 AND 5
+	--total in(1.98,3.96)
+	--BillingCity = 'Brussels'
+	--BillingCity in('Brussels','Orlando','Paris')
+	--BillingCity like 'B%'
+	--BillingCity like '%B%'
+	--InvoiceDate = '2010-05-22 00:00:00'
+	--date(InvoiceDate) = '2010-05-22'
+	--date(InvoiceDate) > '2010-05-22' AND total < 3.00
+	total>1.98 AND (BillingCity like 'P%' or BillingCity like 'D%')
+Order by
+	InvoiceDate;
+	
+	
+	
+	
+	
+Select
+	InvoiceDate,
+	BillingAddress,
+	BillingCity,
+	total,
+	CASE
+	When total < 2.00 THEN 'Baseline Purchase'
+	When total BETWEEN 2.00 AND 6.99 Then 'Low Purchase'
+	WHEN total BETWEEN 7.00 AND 15.00 Then 'Target Purchase'
+	ELSE 'Top Performer'
+	End as PurchaseType
+FROM 
+	Invoice
+Where
+	PurchaseType = 'Top Performer'
+Order by
+	BillingCIty;
+	
+	
+	
+	
+	
+	
+SELECT
+	c.LastName,
+	c.FirstName,
+	i.InvoiceId,
+	i.CustomerId,
+	i.InvoiceDate,
+	i.total
+FROM
+	Invoice i
+Inner JOIN
+	Customer c
+ON 
+	i.CustomerId=c.CustomerId
+order by c.CustomerId;
+
+
+
+
+SELECT
+	e.FirstName,
+	e.LastName,
+	e.EmployeeId,
+	c.FirstName,
+	c.LastName,
+	c.SupportRepId,
+	i.CustomerId,
+	i.total
+FROM
+	Invoice i
+inner JOIN
+	Customer as c
+ON
+	i.CustomerId=c.CustomerId
+INNER JOIN
+	Employee e
+ON
+	c.SupportRepId=e.EmployeeId
+ORDER by
+	i.total DESC
+LIMIT 10;
+
+
+
+SELECT
+	FirstName,
+	LastName,
+	Address,
+	FirstName||' '||LastName||' '||Address||','||City||' '||State||' '||PostalCode as 'Mailling Address',
+	length(postalcode),
+	substr(postalcode, 1, 5) as '5 Digit Postal Code',
+	upper(firstname) as 'First Name All caps',
+	lower(lastname) as 'Last Name All Lower'
+FROM
+	Customer
+WHERE
+	Country='USA';
+	
+	
+	
+SELECT
+	LastName,
+	FirstName,
+	BirthDate,
+	strftime('%Y-%m-%d', Birthdate) as 'Birthdate No Timecode' ,
+	strftime('%Y-%m-%d', 'now')-strftime('%Y-%m-%d', Birthdate) as Age
+FROM
+	Employee;
+
+
+
+SELECT
+	sum(total) 'Total Sales',
+	round(avg(total),2) 'Average Sales',
+	max(total) 'Max Sale',
+	min(total) 'Min Sale',
+	count(*) 'Sales Count'
+FROM
+	Invoice;
+
+
+
+SELECT
+	BillingCity,
+	round(avg(total),2)
+FROM
+	Invoice
+WHERE
+	BillingCity like 'B%'
+GROUP by
+	BillingCity
+HAVING
+	avg(total)>6
+ORDER by
+	BillingCity;
+
+
+
+
+SELECT
+	BillingCountry,
+	BillingCity,
+	round(avg(total),2)
+FROM
+	Invoice
+GROUP by
+	BillingCountry,
+	BillingCity
+ORDER by
+	BillingCountry;
+
+
+
+SELECT
+	BillingCountry,
+	BillingCity,
+	round(avg(total),2)
+FROM
+	Invoice
+GROUP by
+	BillingCountry,
+	BillingCity
+ORDER by
+	BillingCountry;
+
+
+
+
+
+SELECT
+	BillingCity,
+	avg(total) 'City Average',
+	(select avg(total) from invoice)  'Global Average'
+FROM
+	Invoice
+GROUP by
+	BillingCity
+ORDER by
+	BillingCity;
+
+
+
+
+--subqueries without agregate functions
+
+SELECT
+	InvoiceDate,
+	BillingAddress,
+	BillingCity
+FROM
+	Invoice
+WHERE
+	InvoiceDate>
+(SELECT
+	InvoiceDate
+FROM
+	Invoice
+WHERE
+	InvoiceId=251);
+
+
+
+--returning multiple values from a subquery
+SELECT
+	InvoiceDate,
+	BillingAddress,
+	BillingCity
+FROM
+	Invoice
+WHERE
+	InvoiceDate in 
+(SELECT
+	InvoiceDate
+FROM
+	Invoice
+WHERE
+	InvoiceId in (251,252,254));
+	
+	
+	
+	
+--Subqueries and DISTINCT | Which tracks are not selling?
+
+SELECT
+	TrackId,
+	Composer,
+	Name
+FROM
+	Track
+WHERE
+	TrackId
+Not in
+(SELECT
+	DISTINCT
+	TrackId
+FROM
+	InvoiceLine
+ORDER by
+	TrackId);
+	
+	
+	
+--description: views
+
+CREATE VIEW V_AvgTotal as
+SELECT
+	round(avg(total),2) as 'Average Total'
+FROM
+	Invoice;
+	
+	
+	
+DROP VIEW "main"."V_AvgTotal";
+CREATE VIEW V_AvgTotal as
+SELECT
+	avg(total) as 'Average Total'
+FROM
+	Invoice;
+	
+	
+	
+--description: views and joins
+
+CREATE VIEW V_Tracks_InvoiceLine as 
+SELECT
+	il.InvoiceId,
+	il.UnitPrice,
+	il.Quantity,
+	t.Name,
+	t.Composer,
+	t.Milliseconds
+FROM
+	InvoiceLine il
+Inner JOIN
+	Track t
+ON
+	il.TrackId=t.TrackId;
+	
+	
+	
+--description:Inserting Data
+
+INSERT INTO
+	Artist(Name)
+VALUES('Bob Marley');
+
+
+UPDATE 
+Artist
+SET Name='Damien Marley'
+WHERE
+	ArtistId=276;
+	
+	
+--description:DELETE data
+
+DELETE FROM
+	Artist
+WHERE
+	ArtistId=276;
+	
+
+-- Which genres have longer tracks on average to tailor their playist recommandations?
+
+SELECT g.Name as Genre, Avg(t.milliseconds) as AverageDuration
+FROM Genre g
+Join Track t ON g.GenreId=t.GENREID
+Group by g.NAME
+order by AverageDuration Desc
+Limit 5;
+	
+
+
+	
+	
+
+	
